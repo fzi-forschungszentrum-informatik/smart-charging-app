@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+    console.log("ref from keycloak: " + location.href + "=>" + location.origin)
+    parent.postMessage(location.href, location.origin)
+</script>
+</body>
+</html>

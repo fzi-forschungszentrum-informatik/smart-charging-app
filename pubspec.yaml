@@ -1,0 +1,62 @@
+name: fzi_charging_app
+description: Smart-Charging Flutter App
+
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+
+version: 0.0.0+0
+
+environment:
+  sdk: "3.3.4" # dart version
+
+dependencies:
+  flutter:
+    sdk: flutter #latest version
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.4
+  dio: ^5.2.1+1
+  font_awesome_flutter: ^10.1.0
+  path_provider: ^2.0.1
+  http: ^1.1.0
+  intl: ^0.17.0 #cant be updated because charts_flutter is discontinued!
+  flutter_login: ^5.0.0
+  flutter_secure_storage: ^9.0.0
+  charts_flutter: ^0.12.0
+  mqtt_client: ^10.0.0
+  uuid: ^4.3.3
+#  syncfusion_flutter_charts: ^21.2.4 ## Syncfusion Charts need a special licence for use. See https://pub.dev/packages/syncfusion_flutter_charts/license for more Details!
+  keycloak_flutter: ^0.0.21
+  provider: ^6.0.1
+  json_annotation: ^4.8.0
+  loadmore: ^2.0.1
+  shared_preferences: ^2.2.0
+  jwt_decoder: ^2.0.1
+  flutter_web_plugins:
+    sdk: flutter
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.3.3
+  json_serializable: ^6.6.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  assets:
+    - images/ev_station_logo.svg
+    - images/station_logo.png
+
+

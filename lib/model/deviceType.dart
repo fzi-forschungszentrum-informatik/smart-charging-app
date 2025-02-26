@@ -1,0 +1,1 @@
+enum DeviceType { PV, EV, GridConnection, Household, Unknown }

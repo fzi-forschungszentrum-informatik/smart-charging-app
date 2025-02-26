@@ -1,0 +1,2 @@
+json_key_file("google-play-store-credentials.json")
+package_name("de.fzi.iik.synq.app")

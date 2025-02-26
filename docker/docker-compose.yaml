@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+    flutter-app:         
+        image: fzi/charging-app
+        build:
+           context: ..
+           dockerfile: dockerfile
+           args:
+                INCLUDE_KEYCLOAK: "false"
+        ports:
+            - 8000:80

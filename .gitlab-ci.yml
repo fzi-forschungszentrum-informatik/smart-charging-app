@@ -1,0 +1,124 @@
+variables:
+  ANDROID_COMPILE_SDK: "30"
+  ANDROID_BUILD_TOOLS: "30.0.3"
+  ANDROID_SDK_TOOLS:   "10406996"
+  GIT_CLEAN_FLAGS:
+    -ffdx
+    -e .dart_tool
+    -e .gradle/caches
+    -e .gradle/wrapper
+    -e flutter/bin/cache
+  GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  FLUTTER_VERSION: "3.19.6"
+
+.define-build-name: &define-build-name
+  - if [ -n "$CI_COMMIT_TAG" ]; then
+      FLUTTER_BUILD_NAME="$CI_COMMIT_TAG";
+    else
+      FLUTTER_BUILD_NAME=$(git describe --always --abbrev=0);
+    fi
+
+# Web
+
+build:web:
+  stage: build
+  image: docker:latest
+  services:
+    - name: docker:dind
+      alias: dockerhost
+  variables:
+    DOCKER_IMAGE: "$CI_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME"
+    DOCKER_HOST: tcp://dockerhost:2375
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_DRIVER: overlay2
+  script:
+    - docker build . -t "$DOCKER_IMAGE"
+  after_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker push "$DOCKER_IMAGE"
+  tags:
+    - docker-privileged
+
+# Android
+
+build:android:
+  stage: build
+  image: instrumentisto/flutter:$FLUTTER_VERSION
+  before_script:
+    # App Signing
+    - if [ -n "$ANDROID_KEY_PROPERTIES" ]; then
+        echo "$ANDROID_KEY_PROPERTIES" > android/key.properties;
+      fi
+    - if [ -n "$ANDROID_KEY_STORE_BASE64" ]; then
+        echo "$ANDROID_KEY_STORE_BASE64" | base64 -d > android/keystore.jks;
+      fi
+    - apt-get update && apt-get install -y lib32stdc++6
+  script:
+    - flutter packages get
+    - flutter doctor
+    - *define-build-name
+    - flutter build apk
+        --release
+        --build-name=$FLUTTER_BUILD_NAME
+        --build-number=$CI_PIPELINE_ID
+    - flutter build appbundle
+        --release
+        --build-name=$FLUTTER_BUILD_NAME
+        --build-number=$CI_PIPELINE_ID
+  artifacts:
+    paths:
+      - "build/app/outputs/*"
+
+deploy:android:
+  stage: deploy
+  image: debian:stable-slim
+  variables:
+    LC_ALL: en_US.UTF-8
+    LANG: en_US.UTF-8
+  before_script:
+    # Android Play Store
+    - if [ -n "$ANDROID_GOOGLE_PLAY_STORE_API_CREDENTIALS_JSON" ]; then
+        echo "$ANDROID_GOOGLE_PLAY_STORE_API_CREDENTIALS_JSON" > android/google-play-store-credentials.json;
+      fi
+    # Update package index
+    - apt-get update -qq
+    # Fastlane
+    - apt-get install -qqy
+        build-essential
+        ruby
+        ruby-dev
+    - gem install bundler
+    - bundler install
+  script:
+    - cd android
+    - bundler exec fastlane
+        supply
+        --aab ../build/app/outputs/bundle/release/app-release.aab
+        --track internal
+        --release_status draft
+  only:
+    - tags
+
+# iOS
+
+build:ios:
+  when: manual # TODO fix runner
+  # This job is run using a shell runner on a Mac OS system.
+  # This system has many of the dependencies already installed.
+  # Hence, they are not installed in the before_script section.
+  stage: build
+  image: instrumentisto/flutter:$FLUTTER_VERSION
+  script:
+    - flutter doctor
+    - *define-build-name
+    - flutter build ios
+        --release
+        --no-codesign
+        --build-name=$FLUTTER_BUILD_NAME
+        --build-number=$CI_PIPELINE_ID
+  artifacts:
+    paths:
+      - "build/ios/*"
+  tags:
+    - macos
